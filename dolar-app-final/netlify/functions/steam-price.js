@@ -28,12 +28,11 @@ function httpsGet(url) {
       stream.on('end', () => {
         const body = Buffer.concat(chunks).toString('utf8');
         console.log('Status:', res.statusCode, '| Enc:', enc, '| Len:', body.length);
-        console.log('Preview:', body.substring(0, 300));
         resolve({ status: res.statusCode, body });
       });
       stream.on('error', reject);
     });
-    req.on('error', (e) => { console.log('Req error:', e.message); reject(e); });
+    req.on('error', (e) => { console.log('Error:', e.message); reject(e); });
     req.setTimeout(10000, () => { req.destroy(); reject(new Error('Timeout')); });
     req.end();
   });
@@ -46,28 +45,47 @@ exports.handler = async (event) => {
   };
 
   const appid = (event.queryStringParameters?.appid || '').trim();
-  console.log('AppID requested:', appid);
+  console.log('AppID:', appid);
 
   if (!appid || !/^\d+$/.test(appid)) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid appid' }) };
   }
 
   try {
-    const url = `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=AR&l=spanish`;
+    // Fetch in USD so we get the real USD price for our calculations
+    const url = `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=US&l=english&filters=price_overview,name,header_image,is_free`;
     const { status, body } = await httpsGet(url);
 
     if (status !== 200) throw new Error('Steam returned ' + status);
 
-    try {
-      JSON.parse(body); // validate
-      return { statusCode: 200, headers, body };
-    } catch (e) {
-      console.log('JSON parse error:', e.message);
-      return { statusCode: 500, headers, body: JSON.stringify({ error: 'Invalid JSON from Steam' }) };
+    const parsed = JSON.parse(body);
+    const data   = parsed[appid]?.data;
+
+    if (!parsed[appid]?.success || !data) {
+      return { statusCode: 200, headers, body: JSON.stringify({ success: false }) };
     }
 
+    // Build clean response with USD price
+    const price = data.price_overview;
+    const result = {
+      success: true,
+      appid,
+      name: data.name,
+      header_image: data.header_image,
+      is_free: data.is_free,
+      price_usd: price ? {
+        final:            price.final / 100,       // USD
+        initial:          price.initial / 100,     // USD before discount
+        discount_percent: price.discount_percent,
+        currency:         'USD',
+      } : null,
+    };
+
+    console.log('Game:', result.name, '| Price USD:', result.price_usd?.final);
+    return { statusCode: 200, headers, body: JSON.stringify(result) };
+
   } catch (e) {
-    console.log('Handler error:', e.message);
+    console.log('Error:', e.message);
     return { statusCode: 500, headers, body: JSON.stringify({ error: e.message }) };
   }
 };
