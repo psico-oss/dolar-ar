@@ -1,5 +1,7 @@
 [build]
-  functions = "netlify/functions"
+  base = "dolar-app-final"
+  publish = "dolar-app-final"
+  functions = "dolar-app-final/netlify/functions"
 
 [[headers]]
   for = "/*"
