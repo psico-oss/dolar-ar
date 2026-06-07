@@ -2366,8 +2366,9 @@ async function loadGameDetails(appid, name, img) {
     );
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const result = await res.json();
+    console.log('steam-price result:', JSON.stringify(result).substring(0, 200));
 
-    if (!result.success) throw new Error('No data');
+    if (!result.success) throw new Error('No data: ' + JSON.stringify(result).substring(0, 100));
 
     const price     = result.price_usd;
     const headerImg = result.header_image || img;
