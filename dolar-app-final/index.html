@@ -2435,8 +2435,17 @@ async function loadGameDetails(appid, name, img) {
         <div class="steam-savings-box" id="s_steamSavings"></div>`;
 
       // Map IDs for the shared render function
-      const idMap = { mpAmount:'s_mpAmount', apAmount:'s_apAmount', beloAmount:'s_beloAmount', tkAmount:'s_tkAmount', mpDetail:'s_mpDetail', apDetail:'s_apDetail', beloDetail:'s_beloDetail', tkDetail:'s_tkDetail' };
-      const fakeEl = { querySelector: sel => { const id = sel.replace('#',''); return document.getElementById(idMap[id] || id); } };
+      const idMap = {
+        '#mpAmount':   's_mpAmount',
+        '#apAmount':   's_apAmount',
+        '#beloAmount': 's_beloAmount',
+        '#tkAmount':   's_tkAmount',
+        '#mpDetail':   's_mpDetail',
+        '#apDetail':   's_apDetail',
+        '#beloDetail': 's_beloDetail',
+        '#tkDetail':   's_tkDetail',
+      };
+      const fakeEl = { querySelector: sel => document.getElementById((idMap[sel] || sel.replace('#',''))) };
       renderSteamPayments(usdPrice, fakeEl, document.getElementById('s_steamSavings'), null);
     } else {
       calcDiv.innerHTML = '<div class="steam-info-bar" style="margin-top:8px"><span class="steam-info-icon">🎮</span><span class="steam-info-text">Este juego es gratuito, no necesitás pagar nada.</span></div>';
