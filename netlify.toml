@@ -1,6 +1,6 @@
 [build]
   base    = "dolar-app-final"
-  publish = "dolar-app-final"
+  publish = "."
 
 [functions]
-  directory = "dolar-app-final/netlify/functions"
+  directory = "netlify/functions"
