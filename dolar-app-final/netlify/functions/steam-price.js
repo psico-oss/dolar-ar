@@ -53,7 +53,7 @@ exports.handler = async (event) => {
 
   try {
     // Fetch in USD so we get the real USD price for our calculations
-    const url = `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=US&l=english&filters=price_overview,name,header_image,is_free`;
+    const url = `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=US&l=english`;
     const { status, body } = await httpsGet(url);
 
     if (status !== 200) throw new Error('Steam returned ' + status);
