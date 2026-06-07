@@ -46,14 +46,11 @@ exports.handler = async (event) => {
   }
  
   try {
-    // search/results with json=1 returns proper JSON with appids
     const url = 'https://store.steampowered.com/search/results/?term=' +
       encodeURIComponent(query) +
       '&cc=AR&l=spanish&category1=998&json=1&count=10';
  
     const { status, body } = await httpsGet(url);
-    console.log('Status:', status, '| Len:', body.length, '| Preview:', body.substring(0, 300));
- 
     if (status !== 200) throw new Error('Steam returned ' + status);
  
     const data = JSON.parse(body);
@@ -61,16 +58,16 @@ exports.handler = async (event) => {
  
     const results = {};
     items.slice(0, 8).forEach(item => {
-      // item has: id, name, logo, price, etc.
-      if (item.id && item.name) {
-        results[String(item.id)] = {
-          appid: String(item.id),
-          name: item.name,
-        };
-      }
+      if (!item.name || !item.logo) return;
+      // appid lives inside the logo URL:
+      // https://.../steam/apps/1245620/capsule_sm_120.jpg
+      const match = item.logo.match(/\/apps\/(\d+)\//);
+      if (!match) return;
+      const appid = match[1];
+      results[appid] = { appid, name: item.name, logo: item.logo };
     });
  
-    console.log('Results found:', Object.keys(results).length);
+    console.log('Results found:', Object.keys(results).length, Object.values(results).map(r => r.name).join(', '));
     return { statusCode: 200, headers, body: JSON.stringify(results) };
  
   } catch (e) {
