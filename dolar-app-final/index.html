@@ -2434,7 +2434,6 @@ async function loadGameDetails(appid, name, img) {
         </div>
         <div class="steam-savings-box" id="s_steamSavings"></div>`;
 
-      // Map IDs for the shared render function
       const idMap = {
         '#mpAmount':   's_mpAmount',
         '#apAmount':   's_apAmount',
@@ -2446,7 +2445,24 @@ async function loadGameDetails(appid, name, img) {
         '#tkDetail':   's_tkDetail',
       };
       const fakeEl = { querySelector: sel => document.getElementById((idMap[sel] || sel.replace('#',''))) };
-      renderSteamPayments(usdPrice, fakeEl, document.getElementById('s_steamSavings'), null);
+      renderSteamPayments(usdPrice, null, document.getElementById('s_steamSavings'), null);
+      // Manually call each el via fakeEl after injection
+      const oficial = dollarData['oficial']?.venta;
+      const ccl     = dollarData['contadoconliqui']?.venta;
+      const cripto  = dollarData['cripto']?.venta;
+      if (oficial && ccl && cripto) {
+        const mpRate = oficial * 1.21;
+        const apRate = ccl * 1.035;
+        const tkUsd  = usdPrice * 1.01;
+        fakeEl.querySelector('#mpAmount').textContent   = '$' + fmt(usdPrice * mpRate);
+        fakeEl.querySelector('#apAmount').textContent   = '$' + fmt(usdPrice * apRate);
+        fakeEl.querySelector('#beloAmount').textContent = '$' + fmt(usdPrice * cripto);
+        fakeEl.querySelector('#tkAmount').textContent   = 'USD ' + tkUsd.toFixed(2) + ' de tu cuenta';
+        fakeEl.querySelector('#mpDetail').textContent   = 'Oficial $' + fmt(oficial) + ' × 1.21 (IVA) = $' + fmt(mpRate) + '/USD';
+        fakeEl.querySelector('#apDetail').textContent   = 'CCL $' + fmt(ccl) + ' × 1.035 (fee) = $' + fmt(apRate) + '/USD';
+        fakeEl.querySelector('#beloDetail').textContent = 'Cripto $' + fmt(cripto) + '/USD · sin recargos';
+        fakeEl.querySelector('#tkDetail').textContent   = 'USD ' + usdPrice.toFixed(2) + ' + 1% = USD ' + tkUsd.toFixed(2);
+      }
     } else {
       calcDiv.innerHTML = '<div class="steam-info-bar" style="margin-top:8px"><span class="steam-info-icon">🎮</span><span class="steam-info-text">Este juego es gratuito, no necesitás pagar nada.</span></div>';
     }
