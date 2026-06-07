@@ -1,7 +1,25 @@
+const https = require('https');
+
+function httpsGet(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json, text/html, */*',
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve({ status: res.statusCode, body: data }));
+    });
+    req.on('error', reject);
+    req.setTimeout(8000, () => { req.destroy(); reject(new Error('Timeout')); });
+  });
+}
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
   };
 
@@ -11,13 +29,12 @@ exports.handler = async (event) => {
   }
 
   try {
-    const res = await fetch(
-      'https://steamspy.com/api.php?request=search&term=' + encodeURIComponent(query),
-      { headers: { 'User-Agent': 'Mozilla/5.0' } }
-    );
-    if (!res.ok) throw new Error('SteamSpy HTTP ' + res.status);
-    const data = await res.json();
-    return { statusCode: 200, headers, body: JSON.stringify(data) };
+    const url = 'https://steamspy.com/api.php?request=search&term=' + encodeURIComponent(query);
+    const { status, body } = await httpsGet(url);
+    if (status !== 200) throw new Error('SteamSpy returned ' + status);
+    // Validate JSON
+    JSON.parse(body);
+    return { statusCode: 200, headers, body };
   } catch (e) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: e.message }) };
   }
