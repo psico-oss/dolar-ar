@@ -2453,6 +2453,7 @@ async function loadGameDetails(appid, name, img) {
     status.textContent = '';
 
   } catch(e) {
+    console.error('loadGameDetails error:', e.message, e.stack);
     status.textContent = 'No se pudo cargar el precio. Intentá de nuevo.';
     searchEmpty.style.display = 'block';
   }
